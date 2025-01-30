@@ -132,6 +132,11 @@ class BoltzWriter(BasePredictionWriter):
                 struct_dir = self.output_dir / record.id
                 struct_dir.mkdir(exist_ok=True)
 
+                last_layer_z_interface = prediction["last_layer_z"][:, chain_info[0].num_residues:, :chain_info[0].num_residues, :]
+
+                np.savez_compressed(struct_dir / f"last_logits.npz", last_layer_s=prediction["last_layer_s"],
+                                    last_layer_z_interface=last_layer_z_interface)
+
                 # Get plddt's
                 plddts = None
                 if "plddt" in prediction:
