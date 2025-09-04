@@ -2,6 +2,7 @@ import os
 import random
 import string
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -185,19 +186,17 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
         run_id_file = Path(cfg.output) / "wandb_run_id.txt"
 
         @rank_zero_only
-        def get_or_create_run_id() -> str:
-            if run_id_file.exists():
-                run_id = run_id_file.read_text().strip()
-            else:
-                run_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
-                run_id_file.write_text(run_id)
-            return run_id
+        def create_run_id():
+            if not run_id_file.exists():
+                new_run_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+                run_id_file.write_text(new_run_id)
 
         # Make sure all ranks see the same run_id
-        run_id = get_or_create_run_id()
-        if torch.distributed.is_initialized():
-            # broadcast from rank 0 to all other ranks
-            run_id = torch.distributed.broadcast_object_list([run_id], src=0)[0]
+        create_run_id()
+        while not run_id_file.exists():
+            print(f"Rank {os.getenv('LOCAL_RANK')}: Waiting for run_id file to be created...")
+            time.sleep(1)
+        run_id = run_id_file.read_text().strip()
 
         last_ckpt_path = Path(cfg.output) / cfg.wandb["project"] / run_id / "checkpoints" / "last.ckpt"
 
