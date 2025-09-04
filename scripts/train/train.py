@@ -180,6 +180,7 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
 
     # Create wandb logger
     loggers = []
+    last_ckpt_path = None
     if wandb:
         run_id_file = Path(cfg.output) / "wandb_run_id.txt"
 
@@ -197,6 +198,8 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
         if torch.distributed.is_initialized():
             # broadcast from rank 0 to all other ranks
             run_id = torch.distributed.broadcast_object_list([run_id], src=0)[0]
+
+        last_ckpt_path = Path(cfg.output) / cfg.wandb["project"] / run_id / "checkpoints" / "last.ckpt"
 
         wdb_logger = WandbLogger(
             name=wandb["name"],
@@ -243,17 +246,22 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
     if not cfg.strict_loading:
         model_module.strict_loading = False
 
+    ckpt_path = cfg.resume
+    if ckpt_path is None and last_ckpt_path and last_ckpt_path.exists():
+        print(f"Resuming from last checkpoint at {last_ckpt_path}")
+        ckpt_path = str(last_ckpt_path)
+
     if cfg.validation_only:
         trainer.validate(
             model_module,
             datamodule=data_module,
-            ckpt_path=cfg.resume,
+            ckpt_path=ckpt_path,
         )
     else:
         trainer.fit(
             model_module,
             datamodule=data_module,
-            ckpt_path=cfg.resume,
+            ckpt_path=ckpt_path,
         )
 
 
