@@ -189,6 +189,7 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
         def create_run_id():
             if not run_id_file.exists():
                 new_run_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+                os.makedirs(run_id_file.parent, exist_ok=True)
                 run_id_file.write_text(new_run_id)
 
         # Make sure all ranks see the same run_id
