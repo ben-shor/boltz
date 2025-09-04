@@ -21,7 +21,7 @@ out_types = [
     "intra_rna",
     "intra_protein",
     "protein_protein",
-    "modified",
+    # "modified",
 ]
 
 out_types_weights_af3 = {
@@ -35,7 +35,7 @@ out_types_weights_af3 = {
     "intra_rna": 16.0,
     "intra_protein": 20.0,
     "protein_protein": 20.0,
-    "modified": 0.0,
+    # "modified": 0.0,
 }
 
 out_types_weights = {
@@ -49,7 +49,7 @@ out_types_weights = {
     "intra_rna": 8.0,
     "intra_protein": 20.0,
     "protein_protein": 20.0,
-    "modified": 0.0,
+    # "modified": 0.0,
 }
 
 

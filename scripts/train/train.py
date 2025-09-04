@@ -181,6 +181,23 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
     # Create wandb logger
     loggers = []
     if wandb:
+        run_id_file = Path(cfg.output) / "wandb_run_id.txt"
+
+        @rank_zero_only
+        def get_or_create_run_id() -> str:
+            if run_id_file.exists():
+                run_id = run_id_file.read_text().strip()
+            else:
+                run_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+                run_id_file.write_text(run_id)
+            return run_id
+
+        # Make sure all ranks see the same run_id
+        run_id = get_or_create_run_id()
+        if torch.distributed.is_initialized():
+            # broadcast from rank 0 to all other ranks
+            run_id = torch.distributed.broadcast_object_list([run_id], src=0)[0]
+
         wdb_logger = WandbLogger(
             name=wandb["name"],
             group=wandb["name"],
@@ -188,6 +205,8 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
             project=wandb["project"],
             entity=wandb["entity"],
             log_model=False,
+            id=run_id,          # ensures resuming the same run
+            resume="allow",     # resume if run already exists
         )
         loggers.append(wdb_logger)
         # Save the config to wandb
@@ -207,6 +226,9 @@ def train(raw_config: str, args: list[str]) -> None:  # noqa: C901, PLR0912, PLR
         isinstance(devices, (list, listconfig.ListConfig)) and len(devices) > 1
     ):
         strategy = DDPStrategy(find_unused_parameters=cfg.find_unused_parameters)
+
+    if trainer["num_nodes"] == "auto":
+        trainer["num_nodes"] = int(os.environ.get("SLURM_JOB_NUM_NODES", 1))
 
     trainer = pl.Trainer(
         default_root_dir=str(dirpath),

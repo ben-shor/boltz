@@ -370,7 +370,7 @@ class Boltz1(LightningModule):
                     num_sampling_steps=num_sampling_steps,
                     atom_mask=feats["atom_pad_mask"],
                     multiplicity=diffusion_samples,
-                    max_parallel_samples=max_parallel_samples,
+                    max_parallel_samples=max_parallel_samples or diffusion_samples,
                     train_accumulate_token_repr=self.training,
                     steering_args=self.steering_args,
                 )
