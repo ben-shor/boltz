@@ -9,17 +9,17 @@ trainer:
 
 # Optional set wandb here
 wandb:
-  name: boltz
+  name: lrp0003
   project: boltz_train
   entity: null
 
 
-output: /sci/nosnap/dina/bshor/202509_boltz_train/train_output/struct_8layer
+output: /sci/nosnap/dina/bshor/202509_boltz_train/train_output/8layer_lrp0003
 # pretrained: PATH_TO_CHECKPOINT_FILE
 resume: null
 disable_checkpoint: false
 matmul_precision: null
-save_top_k: -1
+save_top_k: 5
 
 data:
   datasets:
@@ -160,7 +160,7 @@ model:
     adam_eps: 0.00000001
     lr_scheduler: af3
     base_lr: 0.0
-    max_lr: 0.0018
+    max_lr: 0.0003
     lr_warmup_no_steps: 1000
     lr_start_decay_after_n_steps: 50000
     lr_decay_every_n_steps: 50000
